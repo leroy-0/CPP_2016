@@ -1,0 +1,9 @@
+cmake*
+vgcore*
+.idea*
+save/
+.o
+~
+Ogre.log
+CEGUI.log
+bin/cegui-0.8.7/*

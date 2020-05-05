@@ -1,0 +1,69 @@
+
+-- OPTIONS --
+source file      = media/models/ArmyPilot.skeleton.xml
+destination file = ArmyPilot.skeleton
+log file         = OgreXMLConverter.log
+ semantic = TEXCOORD
+ parity = 102
+ split mirror = 108
+ split rotated = 111
+-- END OPTIONS --
+
+Creating resource group General
+Creating resource group Internal
+Creating resource group Autodetect
+Registering ResourceManager for type Mesh
+Registering ResourceManager for type Material
+Registering ResourceManager for type Skeleton
+XMLSkeletonSerializer: reading XML data from media/models/ArmyPilot.skeleton.xml...
+XMLSkeletonSerializer: Reading Bones name...
+XMLSkeletonSerializer: Reading Hierarchy data...
+XMLSkeletonSerializer: Reading Bones data...
+XMLSkeletonSerializer: Reading Animations data...
+XMLSkeletonSerializer: Finished. Running SkeletonSerializer...
+Exporting bones..
+Bones exported.
+Exporting animations, count=20
+Exporting animation: Aim Running
+Animation exported.
+Exporting animation: Idle
+Animation exported.
+Exporting animation: Idle Aim
+Animation exported.
+Exporting animation: Idle Firing
+Animation exported.
+Exporting animation: Idle Reload
+Animation exported.
+Exporting animation: Jump
+Animation exported.
+Exporting animation: Left Fire
+Animation exported.
+Exporting animation: Right FIre
+Animation exported.
+Exporting animation: Run Firing
+Animation exported.
+Exporting animation: Run_Forwards
+Animation exported.
+Exporting animation: Run_backwards
+Animation exported.
+Exporting animation: Stand Aim Down
+Animation exported.
+Exporting animation: Stand Aim Up
+Animation exported.
+Exporting animation: Standing 2
+Animation exported.
+Exporting animation: Strafe Left
+Animation exported.
+Exporting animation: Strafe Right
+Animation exported.
+Exporting animation: Walk
+Animation exported.
+Exporting animation: Walk Aiming
+Animation exported.
+Exporting animation: Walk Backwards
+Animation exported.
+Exporting animation: Walk Firing
+Animation exported.
+Unregistering ResourceManager for type Skeleton
+Unregistering ResourceManager for type Material
+Unregistering ResourceManager for type Mesh

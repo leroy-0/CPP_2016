@@ -1,0 +1,277 @@
+[Running the Arcade]
+
+Compile the games/libs :
+"$ make"
+
+Run the arcade :
+"$ ./arcade PATH_TO_FIRST_GFX_LIB.so"
+This exemple will run the games with the sfml library :
+"$ ./arcade lib/lib_arcade_sfml.so"
+
+[Understanding the protocol]
+File : inc/Protocol.hpp
+
+The procotol is an important part of the Arcade.
+If you want to add your own game and be fully compatible with the Arcade, you need to understand and implement the protocol rules 
+
+" namespace arcade
+enum class            CommandType : uint16_t
+{
+    WHERE_AM_I        = 0,            // RETURN A WHERE AM I STRUCTURE          
+    GET_MAP           = 1,            // RETURN A GETMAP STRUCTURE              
+    GO_UP             = 2,            // MOVE THE CHARACTER UP                  
+    GO_DOWN           = 3,            // MOVE THE CHARACTER DOWN                
+    GO_LEFT           = 4,            // MOVE THE CHARACTER LEFT                
+    GO_RIGHT          = 5,            // MOVE THE CHARACTER RIGHT               
+    GO_FORWARD        = 6,            // MOVE THE CHARACTER FORWARD (FOR SNAKE) 
+    SHOOT             = 7,            // SHOOT (FOR SOLAR FOX AND CENTIPEDE)    
+    ILLEGAL           = 8,            // THE INSTRUCTION WAS ILLEGAL            
+    PLAY              = 9,            // PLAY A ROUND                           
+    UNDEFINED         = 10,	      // DO NOT USE	 
+    STOP                = 11,	      // STOP THE PROGRAM
+    SWITCH_LIB_NEXT     = 12,	      // SWITCH TO THE NEXT LIB
+    SWITCH_LIB_PREV     = 13,	      // SWITCH TO THE PREV LIB
+    SWITCH_GAME_NEXT    = 14,	      // SWITCH TO THE NEXT GAME
+    SWITCH_GAME_PREV    = 15	      // SWITCH TO THE PREV GAME
+    MENU		= 16,	      // RETURN TO THE MENU
+    RESTART		= 17,	      // RESTART THE INSTANCE OF THE CURRENT GAME
+    GAME_WON		= 18,	      // GG
+    GAME_OVER		= 19	      // YOU LOSE
+  };
+"
+These are the command used by the different IGraph/IGame libs to communicate
+
+
+" namespace arcade
+ enum class            TileType : uint16_t
+   {
+     EMPTY             = 0,            // TILE WHERE THE CHARACTER CAN GO                 
+     BLOCK             = 1,            // TILE WHERE THE CHARACTER CANNOT GO              
+     OBSTACLE          = 2,            // FOR CENTIPEDE                                   
+     EVIL_DUDE         = 3,            // EVIL DUDE                                       
+     EVIL_SHOOT        = 4,            // EVIL SHOOT                                      
+     MY_SHOOT          = 5,            // PLAYER SHOOT
+     POWERUP           = 6,            // POWERUP                                         
+     OTHER             = 7,            // ANYTHING THAT WILL BE IGNORED BY THE KOALINETTE 
+     PLAYER 	       = 8	       // PLAYER CELL
+   };
+
+"
+These are the TileTypes (used by arcade::Map).
+Texture/color are displayed according to the TyleType
+
+" namespace arcade
+  // The format is width, height, and width * height * sizeof(TileType) quantity of TileType
+  struct                GetMap
+  {
+    CommandType         type;
+    uint16_t            width;
+    uint16_t            height;
+    TileType            tile[0];
+  } __attribute__((packed));
+
+  // The format is length, length * Position quantity of TileType                           
+  struct                Position
+  {
+    uint16_t            x;
+    uint16_t            y;
+  } __attribute__((packed));
+
+  struct                WhereAmI
+  {
+    CommandType         type;
+    uint16_t            lenght;
+    Position            position[0];
+  } __attribute__((packed));
+}
+"
+You need to fill these struct all througt your game. GetMap is the current instance of the Map
+These class can help you: games/commons/inc/Map.hpp & games/commons/inc/Character.hpp.
+Both class are built-in, and can help you to manipulate the different structures (class Map is for GetMap manipulation,
+Character is for WhereAmI)
+
+
+[Changing/Adding texture/color for included library]
+
+	  [lib_arcade_caca]
+	  libcaca::textureMap = std::map<std::string, std::map<arcade::tileType, enum caca_color>;
+	  Open lib/caca/src/arcade_libcaca.cpp
+	  Go to the class constructor and search for lines like this :
+	  " tileTexture[arcade::TileType::BLOCK] = CACA_GREEN;
+  	    tileTexture[arcade::TileType::EMPTY] = CACA_BLACK;
+  	    this->textureMap["snake"] = tileTexture;
+	  "
+	  These lines change texture for the snake game (this->textureMap["snake"])
+	  For accessing the color here is the prototype
+	  this->textureMap[game][arcade::TileType] = caca_color;
+	  For the previous example we set the CACA_GREEN color for the BLOCK TileType
+
+	      [Adding a TileType]
+	      Just add a new tileTexture[TYPE] and he'll be displayed if the current TileType exists in the GetMap
+
+	  [lib_arcade_sfml]
+	  libsflm::textureMap = std::map<std::string, std::map<arcade::TileType, sf::Texture *>
+	  Almost the same thing as lib_arcade_caca
+
+	  Open lib/caca/src/arcade_libsfml.cpp
+	  Go to the class constructor and search lines like this :
+	  "tileTexture[arcade::TileType::BLOCK] = new sf::Texture();
+	   tileTexture[arcade::TileType::BLOCK]->loadFromFile("./lib/assets/player.png");
+	   tileTexture[arcade::TileType::EMPTY] = NULL;
+	   this->textureMap["snake"] = tileTexture;
+	  "
+	  These lines change texture for the snake game(this->textureMap["snake"])
+	  For accessing the texture, here is the prototype
+	  this->textureMap[game][arcade::TileType] = sf::Texture *;
+	  For the previous exemple we set the asset "player.png" to the BLOCK TileType
+
+	      [Adding a new TileType]
+	      Go to the "void arcade::libsfml::loadAssets(const std::string & gameName)" method
+	      Add a new entry to "this->spriteMap[arcade::TileType]" std::map.
+	      Be aware, if all the games didn't have the current TileType in their games,
+	      just load the Sprite in the game Condition
+	      For exemple, if you want to add Ennemies to your Pacman game, because the Nibbler didn't have any ennemies
+	      you'll need to load the sprite in his condition
+	      "
+	      if (gameName.compare("pacman") == 0)
+ 	       {
+    	       this->spriteMap[arcade::TileType::EVIL_DUDE] = new sf::Sprite();
+    	       this->spriteMap[arcade::TileType::EVIL_DUDE]->setTexture(*(this->textureMap[gameName])[arcade::TileType::EVIL_DUDE]);
+	       }
+	      "
+
+	  [lib_arcade_opengl]
+	  Please god do not use this built-in lib, we do not handle 3D.
+	  This lib will only handle color displaying.
+	  Go to the void "arcade::libopengl::loadAssets(const std::string & gameName)" method
+	  Add the corresponding color to your blockType
+	  Here is the prototype of the spriteMap
+	  "std::map<arcade::TileType, float[3] > spriteMap;"
+	  For exemple :
+	  "
+	  spriteMap[arcade::TileType::OTHER][0] = 1.0f;
+    	  spriteMap[arcade::TileType::OTHER][1] = 0.6f;
+    	  spriteMap[arcade::TileType::OTHER][2] = 0.2f;
+	  "
+	  Will use the orange color for the "OTHER" TileType
+
+	       [Adding a new TileType]
+	       Same as lib_arcade_libcaca, you just need to add the entry
+	  
+[Understanding the IGame interface]
+file : games/common/inc/IGame.hpp
+"
+namespace arcade {
+    class IGame {
+        public:
+	        virtual ~IGame() {};
+		CommandType run(IGraphics *) = 0;
+		};
+	};
+"
+
+the "CommandType run(IGraph *)" method just start the game with the current IGraph selected;
+The command will be interpreted in the Core loop.
+All games implemented NEED to be inherited from IGame
+
+[Understanding the IGraph interface]
+file : inc/IGraph.hpp
+"
+namespace arcade {
+    class IGraph {
+    public:
+        virtual void getKey() = 0;
+      virtual   void getEvent() = 0;
+      virtual   arcade::CommandType manageEvent(int &) = 0;
+      virtual   void displayMap(arcade::GetMap *map) = 0;
+      virtual   void freeDisplay() = 0;
+      virtual   void  loadAssets(const std::string & gameName) = 0;
+    };
+};
+"
+
+The "arcade::ComandType manageEvent(int &)" method gather all events from a GFX library and return an arcade::CommandType that should be used in your IGame
+For exemple: the manageEvent method from the lib_arcade_sfml look if there's an input event, and return the corresponding command
+
+The "void displayMap(arcade::GetMap *map) method use the GetMap struct from Protocol.hpp and display the map tile by tile (from map[0] to map[n]);
+
+The "void freeDisplay()" method close the current GFX window and free necessary pointers (like a DTOR)
+
+The "loadAssets(const std::string & gameName)" method is call whenever you load a game, for exemple "gfx_sfml->loadAssets("snake")" will load the "snake"(game) assets of the "lib_arcade_sfml"
+
+
+
+[Adding a new Game]
+files : src/Core.cpp, inc/Core.hpp, all IGraph libs (lib/*)
+
+First you need to use the Protocol struct/enum, then you need to understand how IGame and IGraph works
+
+Your game will be launched like this "yourGame->run(IGraph *)", once you get the IGraph class accessible, you can use the different method from the interface (above-mentionned) to display your game
+
+Your game class have to inherit from IGame. Once your game is ready, just add a method like this one :
+
+"
+extern "C" yourGame *getLib()
+{
+  yourGame *_new = new youGame();
+  return (_new);
+}
+"
+
+This function will be called by dynamic symbols (dlopen/dlsym) so the "extern "C"" keyword is mandatory. You need to return a pointer to a new instance of your game !
+
+Once everything is OK: just compile your program in a .so library
+
+Your game is ready :) now you need to tell your Core to load the game
+
+Go to the src/Core.cpp file, in the arcade::Core class constructor search for lines like these:
+"
+this->games["snake"] = dlopen("./games/lib_arcade_nibbler.so", RTLD_NOW | RTLD_LAZY);
+"
+
+Here is the prototype "std::map<std::string, void *>  games", so you just need to make something like this:
+"
+this->games[YOURGAME] = dlopen("THE PATH TO YOUR GAME .so", RTLD_NOW | RTLD_LAZY);
+"
+
+Okay, now the core load your game, you need to add an entry to the menu now
+
+Go to all GFX libs (in lib/ folder), search for "int arcade::LIB::menu(arcade::CommandType choose)" method
+You can put your entry here.
+Now you just need to add textures for your game (above-mentionned for given library(sfml, libcaca, openGL/Glew))
+
+If you want your game to be part of the game rotation , add an entry to this vector (in ./inc/Core.hpp):
+"
+std::string game_libs[2] = {"snake", "pacman", "yourgame"};
+"
+
+[Adding a new GFX lib]
+files : src/Core.cpp, inc/Core.hpp
+
+As for the new Game, you really need to understand the Protocol, the IGame and IGraph interfaces in order to add a new IGraph lib
+
+Once your lib is ready, add a function like this one :
+"
+extern "C" youtLib *getLib()
+{
+    yourLib *_new = new yourLib();
+    return (_new);
+}      
+"
+
+Your library is loaded dynamically, do not forget to add the "extern "C"" keyword. Return a pointer to a new instance of your IGraph lib
+
+Everything is ready, now you need to tell to your Core that you add a new lib
+Go to the arcade::Core constructor, search for lines like these:
+"
+this->libs["./lib/lib_arcade_caca.so"] =  dlopen("./lib/lib_arcade_caca.so", RTLD_LAZY | RTLD_NOW);
+"
+Just add the path to your lib and 'll be good :)
+
+If you want your library to be in the IGraph lib rotation, add an entry to this vector (in ./inc/Core.hpp) :
+"
+std::string gfx_libs[4] = {"lib/lib_arcade_libcaca.so", "lib/lib_arcade_sfml.so", "lib/lib_arcade_opengl.so", "YOUR PATH"};
+"
+
+
+

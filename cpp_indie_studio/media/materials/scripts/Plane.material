@@ -1,0 +1,17 @@
+material Plane/Skin
+{
+        technique
+        {
+                pass
+                {
+                        ambient 0.3 0.8 0.3
+
+                        texture_unit
+                        {
+                                texture stone_0001_c.jpg
+                                tex_address_mode mirror
+                                scale 0.5 0.5
+                        }
+                }
+        }
+}

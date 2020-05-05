@@ -1,0 +1,222 @@
+#!/bin/bash
+## install.bash for install in /home/adrien/rendu/TEK2/cpp_indie_studio
+## 
+## Made by Adrien Bachelet
+## Login   <adrien.bachelet@epitech.eu>
+## 
+## Started on  Wed Jun 14 12:39:54 2017 Adrien Bachelet
+## Last update Sun Jun 18 21:08:58 2017 Adrien Bachelet
+##
+
+ESC="\033["
+C_RED=$ESC"0;31m"
+C_GREEN=$ESC"0;32m"
+C_YELLOW=$ESC"0;33m"
+C_BWHITE=$ESC"1;37m"
+C_RST=$ESC"0m"
+error=0
+
+function handle_error
+{
+    result=$1
+    ((error++))
+    if test $result -eq 0; then
+	return
+    else
+        line "#" $C_RED
+        line "#" $C_YELLOW
+	echo -en $C_RED"[Erreur]"$C_RST" lors de l'installation, voulez-vous arreter le script ?\
+ [O/n]       "    
+        read stop_script
+	case $stop_script in
+            n|N)    return;;
+            *)              exit 1;;
+        esac
+    fi
+}
+
+function line
+{
+        cols=$(tput cols)
+	char=$1
+        color=$2
+
+        if test "$color" != ""; then
+	    echo -ne $color
+        fi
+	
+        for i in $(eval echo "{1..$cols}"); do
+	    echo -n $char
+        done
+        echo
+	
+        if test "$color" != ""; then
+                echo -ne $C_RST
+	fi
+}
+
+function header
+{
+    color=$2
+    if test "$color" = ""; then
+        color=$C_RED
+    fi
+    
+    echo
+    echo -ne $color
+    line "-"
+    echo "##> "$1
+    line "-"
+    echo -ne $C_RST
+    echo
+}
+
+function init
+{
+    os="void"
+    get_os_type    
+    if test "$os" = "void"; then
+        line "#" $C_YELLOW
+        script_header "VOTRE DISTRIBUTION N'EST PAS SUPPORTÉE..."
+        line "#" $C_YELLOW
+        exit 42
+    fi
+}
+
+function get_os_type
+{
+    which zypper &> /dev/null && os="opensuse" && installator="zypper install"
+    which pacman &> /dev/null && os="archlinux" && installator="pacman -S"
+    which yum &> /dev/null && os="fedora" && installator="yum install"
+    which apt-get &> /dev/null && os="debian" && installator="apt-get install"
+    which emerge &> /dev/null && os="gentoo" && installator="emerge"
+}
+
+function install_cmake
+{
+    header "INSTALLATION DE CMAKE" $C_BWHITE
+    wget http://www.cmake.org/files/v3.6/cmake-3.6.0.tar.gz
+    tar xvzf cmake-3.6.0.tar.gz
+    cd cmake-3.6.0
+    ./configure
+    make -j2
+    sudo make install
+    cd ..
+    handle_error $?
+}
+
+function install
+{
+    header "INSTALLATION DE $2" $C_BWHITE
+    sudo $installator $1
+    handle_error $?
+}
+
+function install_ogre
+{
+    header "INSTALLATION DE OGRE" $C_BWHITE
+    hg clone https://bitbucket.org/sinbad/ogre/
+    cd ogre
+    mkdir build
+    cd build
+    cmake ..
+    make -j2
+    sudo make install
+    cd ./../..
+    handle_error $?
+}
+
+function install_cegui
+{
+    header "INSTALLATION DE CEGUI" $C_BWHITE
+    rm -rf ./cegui-0.8.7
+    unzip cegui-0.8.7.zip
+    cd ./cegui-0.8.7
+    cmake .
+    sudo make -j2 install
+    cd ./..
+    handle_error $?
+}
+
+function install_bomberman
+{
+    header "INSTALLATION DE BOMBERMAN" $C_BWHITE
+    make re
+    handle_error $?
+}
+
+function classic_install
+{
+    install ois OIS
+    handle_error $?
+    install boost BOOST
+    handle_error $?
+    install_cegui CEGUI
+    handle_error $?
+    install ogre OGRE
+    handle_error $?
+    install_bomberman
+    handle_error $?
+}
+
+function install_fedora
+{
+    install gcc-c++ G++
+    handle_error $?
+    install ois OIS
+    handle_error $?
+    install make MAKE
+    handle_error $?
+    install mercurial MERCURIAL
+    handle_error $?
+    install_cmake
+    handle_error $?
+    install_cegui CEGUI
+    handle_error $?
+    install_ogre
+    install_bomberman
+    handle_error $?
+}
+
+function install_debian
+{
+    install build-essential BUILD-ESSENTIAL
+    handle_error $?
+    install gcc GCC-G++
+    handle_error $?
+    install libois-dev OIS
+    install mercurial MERCURIAL
+    handle_error $?
+    install_cmake
+    handle_error $?
+    install_cegui CEGUI
+    handle_error $?
+    install xorg XORG
+    handle_error $?
+    install openbox OPENBOX
+    handle_error $?
+    install libxaw7-dev XAW
+    handle_error $?
+    install_ogre
+    install_bomberman
+}
+
+init
+case "$os" in
+    opensuse)
+	classic_install
+        ;;
+    archlinux)
+	classic_install
+	;;
+    fedora)
+	install_fedora
+	;;
+    debian)
+	install_debian
+	;;
+    gentoo)
+	classic_install
+	;;
+esac
+handle_error $?

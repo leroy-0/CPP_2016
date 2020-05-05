@@ -1,0 +1,17 @@
+material Background/Skin
+{
+        technique
+        {
+                pass
+                {
+                        ambient 0.3 0.8 0.3
+
+                        texture_unit
+                        {
+                                texture background.jpg
+                                tex_address_mode mirror
+                                scale 1 1
+                        }
+                }
+        }
+}
